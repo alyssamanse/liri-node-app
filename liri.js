@@ -1,16 +1,32 @@
 var twitterKeys = require("./keys.js");
 var twitter = require("twitter");
-var request = require("request");
-
-var action = process.argv[2];
-var query = process.argv[3];
-
 var client = new twitter(twitterKeys);
 
+var request = require("request");
+
+var Spotify = require('node-spotify-api');
 var spotifyClientId = "582d9818c07f4826a1ce74a5d2a495cc";
 var spotifyClientSecret = "9405bd40066e4b3cb0e1f6b90f0209cd";
+ 
+var spotify = new Spotify({
+  id: spotifyClientId,
+  secret: spotifyClientSecret
+});
 
-var omdbKey = "40e9cece";
+var omdbQueryUrl = "http://www.omdbapi.com/?t=" + query + "&y=&plot=short&apikey=40e9cece";
+
+var nodeArgs = process.argv;
+var action = process.argv[2];
+var query = "";
+
+for (var i = 3; i < nodeArgs.length; i++) {
+  if (i > 3 && i < nodeArgs.length) {
+    query = query + "+" + nodeArgs[i];
+  }
+  else {
+    query += nodeArgs[i];
+  }
+}
 
 function myTweets() {
 
@@ -27,11 +43,33 @@ function myTweets() {
 }
 
 function spotifyThisSong(query) {
+	spotify.search({ type: 'track', query: query }, function(error, data) {
+		if (error) {
+			return console.log('Error occurred: ' + err);
+		}
 
+		console.log("Artist: " + data.tracks.items[0].artists[0].name);
+		console.log("Song Name: " + data.tracks.items[0].name) 
+		console.log("Preview Link: " + data.tracks.items[0].album.external_urls.spotify)
+		console.log("Album: " + data.tracks.items[0].album.name) 
+	});
 }
 
 function movieThis(query) {
 
+	request(omdbQueryUrl, function(error, response, body) {
+
+		if (!error && response.statusCode === 200) {
+	    console.log("Title: " + JSON.parse(body).Title);
+	    console.log("Release Year: " + JSON.parse(body).Year);
+	    console.log("IMDB Rating: " + JSON.parse(body).Ratings);
+	    console.log("Rotten Tomatoes Rating: " + JSON.parse(body).Ratings);
+	    console.log("Country: " + JSON.parse(body).Country);
+	    console.log("Language: " + JSON.parse(body).Language);
+	    console.log("Plot: " + JSON.parse(body).Plot);
+	    console.log("Actors: " + JSON.parse(body).Actors);
+		}
+	});
 }
 
 switch (action) {
@@ -39,24 +77,23 @@ switch (action) {
 	myTweets();
 	break;
 
-	// case "spotify-this-song":
-	// spotifyThisSong(query);
-	// break;
-
-	// case "movie-this":
-	// movieThis(query);
-	// break;
-
+	case "spotify-this-song":
+	spotifyThisSong(query);
+	break;
+	
+	case "movie-this":
+	movieThis(query);
+	break;
 }
 
 
-// command "my-tweets" shows last 20 tweets and when they were created
 
-// command "spotify-this-song <song name here>" will show artist(s), song's name, preview link, albums it's from
 // if no song is provided, program defaults to "The Sign" by Ace of Base
-// use node-spotify-api package to retrieve song info
 
-// command "movie-this <movie name here>" will output title, year, IMDB rating, Rotten Tomatoes rating, country, language, plot, actors
+// check JSON.parse
+
+// fix ratings search for omdb... one array with objects inside
+
 // if user doesn't type in a movie, the program will default to Mr. Nobody
 
 // command "do-what-it-says" uses fs node package to take text inside of random.txt and then use it to call one of Liri's commands
