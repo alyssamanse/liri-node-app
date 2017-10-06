@@ -1,5 +1,7 @@
 var twitterKeys = require("./keys.js");
 var twitter = require("twitter");
+var fs = require("fs");
+
 var client = new twitter(twitterKeys);
 
 var request = require("request");
@@ -94,6 +96,40 @@ function movieThis(query) {
 	});
 }
 
+function doWhatItSay() {
+
+	fs.readFile("random.txt", "utf8", function(error, data) {
+
+		if (error) {
+	  		return console.log(error);
+	  	}
+
+		var dataArr = data.split(",");
+
+		action = dataArr[0];
+		var queryString = (dataArr[1].split(" "));
+
+		for (var i = 0; i < queryString.length; i++) {
+			if (i > 0 && i < queryString.length) {
+				query = query + "+" + queryString[i];
+			}
+			else {
+				query += queryString[i];
+			}
+		}
+		runWhatItSays(action, query);
+	});
+
+}
+
+function runWhatItSays(action, query) {
+	if (action === "spotify-this-song") {
+		spotifyThisSong(query);
+	} else if (action === "movie-this") {
+		movieThis(query);
+	}
+}
+
 switch (action) {
 	case "my-tweets":
 	myTweets();
@@ -106,9 +142,8 @@ switch (action) {
 	case "movie-this":
 	movieThis(query);
 	break;
+
+	case "do-what-it-says":
+	doWhatItSay();
+	break;
 }
-
-// check JSON.parse
-
-// command "do-what-it-says" uses fs node package 
-// to take text inside of random.txt and then use it to call one of Liri's commands
